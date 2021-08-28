@@ -1,0 +1,874 @@
+import groovy.json.JsonOutput
+
+import java.util.function.Consumer
+import java.util.logging.StreamHandler
+
+/**
+ * create:zhuguohui
+ * updateLogo:
+ * 支持Android gradle 插件 4.1.0
+ * 支持Android gradle 插件 4.0.1
+ * 支持Android gradle 插件 3.4.1
+ */
+//-----------gui中需要的类--------------------------------------
+class ApkInfo {
+    String apkName;
+    String customName;
+    String apkVersionName;
+    String apkBuildCode;
+
+    String apkOutputFileName;
+    String apkOutputDirectory;
+    String apkLogoPath;
+
+    //----------发布相关---------
+    String apkDownLoadUrl;
+
+    ApkInfo(String apkName,
+            String customName,
+            String apkVersionName,
+            String apkBuildCode,
+            String apkOutputFileName,
+            String apkOutputDirectory,
+            String apkLogoPath,
+            String apkDownLoadUrl) {
+        this.apkName = apkName;
+        this.customName = customName;
+        this.apkVersionName = apkVersionName;
+        this.apkBuildCode = apkBuildCode;
+        this.apkOutputFileName = apkOutputFileName;
+        this.apkOutputDirectory = apkOutputDirectory;
+        this.apkLogoPath = apkLogoPath;
+        this.apkDownLoadUrl = apkDownLoadUrl;
+    }
+}
+
+class EmailItem {
+    String smtpUrl;
+    String address;
+    String password;
+    boolean enable;
+
+
+    EmailItem(String smtpUrl, String userName, String password, boolean enable) {
+        this.smtpUrl = smtpUrl;
+        this.address = userName;
+        this.password = password;
+        this.enable = enable;
+    }
+}
+
+
+class PublishInfo {
+    EmailItem emailInfo;
+    List<ApkInfo> apkInfos;
+
+    PublishInfo(emailInfo, List<ApkInfo> apkInfos) {
+        this.emailInfo = emailInfo;
+        this.apkInfos = apkInfos;
+    }
+
+}
+
+
+//-----------gui中需要的类结束--------------------------------------
+
+
+//这是领域对象类型定义
+class Apk {
+
+    //应用名称，固定的
+    String appName;
+
+
+    //必须定义一个 name 属性，并且这个属性值初始化以后不要修改
+    String name
+
+    String buildType
+
+    String flavor
+
+    //保存Android系统构建的时候，设置的输出文件名
+    String apkBuildPath;
+
+    String outputFileName;
+
+    String outputDirectory;
+
+    String logoPath;
+
+    String serverName;
+
+    String dowLoadUrl;
+
+    String androidVersionName;
+
+    String androidVersionCode;
+
+    SignConfig signConfig;
+
+    boolean useGitLog = false;
+
+    //构造函数必须有一个 name 参数
+    Apk(String name) {
+        this.name = name
+    }
+
+    void buildType(String buildType) {
+        this.buildType = buildType
+    }
+
+    void flavor(String flavor) {
+        this.flavor = flavor
+    }
+
+    void useGitLog(Boolean useGitLog) {
+        this.useGitLog = useGitLog
+    }
+
+    void serverName(String serverName) {
+        this.serverName = serverName
+    }
+
+}
+
+//这是领域对象类型定义
+class Fir {
+
+    //必须定义一个 name 属性，并且这个属性值初始化以后不要修改
+    String name
+
+    String apiToken
+
+    //构造函数必须有一个 name 参数
+    Fir(String name) {
+        this.name = name
+    }
+
+    void apiToken(String apiToken) {
+        this.apiToken = apiToken
+    }
+
+}
+
+/**
+ * 蒲公英服务器
+ */
+class PGY {
+    //必须定义一个 name 属性，并且这个属性值初始化以后不要修改
+    String name
+
+    String uKey
+
+    String apiKey
+
+    String password
+
+    boolean usePasswordOnInstall
+
+    //构造函数必须有一个 name 参数
+    PGY(String name) {
+        this.name = name
+    }
+
+    void uKey(String uKey) {
+        this.uKey = uKey;
+    }
+
+    void apiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    void password(String password) {
+        this.password = password
+    }
+
+    void usePasswordOnInstall(boolean use) {
+        this.usePasswordOnInstall = use;
+    }
+}
+
+
+class ApkInfoClass {
+
+    //必须定义一个 name 属性，并且这个属性值初始化以后不要修改
+    String appName;
+
+    File appLogo
+
+    String publisherName
+
+    void appName(String name) {
+        this.appName = name;
+    }
+
+    void appLogo(File icon) {
+        this.appLogo = icon;
+    }
+
+    void publisherName(String name) {
+        this.publisherName = name;
+    }
+
+}
+
+class EmailConfig {
+    String smtpServer;
+    String emailAddress;
+    String emailPassWord;
+    boolean enable;
+
+    void smtpServer(String value) {
+        this.smtpServer = value;
+    }
+
+    void emailAddress(String value) {
+        this.emailAddress = value;
+    }
+
+    void emailPassWord(String value) {
+        this.emailPassWord = value;
+    }
+
+    void enable(boolean enable) {
+        this.enable = enable;
+    }
+}
+
+//模拟Android定义自己的signConfig
+
+class SignConfig {
+    File storeFile;
+    String storePassword;
+    String keyAlias;
+    String keyPassword;
+}
+
+class JiaGuConfig {
+    String jarPath;
+    String userName;
+    String password;
+    String outPutPath;
+
+    void jarPath(String jarPath) {
+        this.jarPath = jarPath;
+    }
+
+    void userName(String userName) {
+        this.userName = userName;
+    }
+
+    void password(String password) {
+        this.password = password;
+    }
+
+    void outPutPath(String file) {
+        this.outPutPath = file;
+    }
+}
+
+//创建一个扩展
+class PublishConfig {
+
+    //定义一个 NamedDomainObjectContainer 属性
+    NamedDomainObjectContainer<Apk> apkDomains
+    NamedDomainObjectContainer<Fir> firServers
+    NamedDomainObjectContainer<PGY> pgyServers
+    EmailConfig email;
+    ApkInfoClass apkInfo;
+    JiaGuConfig jiaGuConfig;
+
+
+    PublishConfig(Project project) {
+        //通过 project.container(...) 方法创建 NamedDomainObjectContainer
+        NamedDomainObjectContainer<Apk> domainObjs = project.container(Apk)
+        apkDomains = domainObjs
+        NamedDomainObjectContainer<Fir> domainObjs2 = project.container(Fir)
+        firServers = domainObjs2
+        NamedDomainObjectContainer<PGY> domainObjs3 = project.container(PGY)
+        pgyServers = domainObjs3
+        email = new EmailConfig();
+        apkInfo = new ApkInfoClass();
+        jiaGuConfig = new JiaGuConfig();
+    }
+
+
+    //创建内部Extension，名称为方法名 email
+    void email(Action<EmailConfig> action) {
+        action.execute(email)
+    }
+
+    void apkInfo(Action<ApkInfoClass> action) {
+        action.execute(apkInfo)
+    }
+
+    void pgy(Action<NamedDomainObjectContainer<PGY>> action) {
+        action.execute(pgyServers)
+    }
+
+    //让其支持 Gradle DSL 语法
+    void apk(Action<NamedDomainObjectContainer<Apk>> action) {
+        action.execute(apkDomains)
+    }
+
+    void fir(Action<NamedDomainObjectContainer<Fir>> action) {
+        action.execute(firServers)
+    }
+
+    void jiaGu(Action<JiaGuConfig> action) {
+        action.execute(jiaGuConfig)
+    }
+}
+
+class Util {
+    static String projectDir;
+    static printlnLine2() {
+        println '------------------------------------------------------------------------'
+    }
+
+    static showPublish(EmailConfig config, Apk... apks ) {
+
+        List<ApkInfo> apkInfos = getApkInfos(apks);
+        EmailItem emailItem = new EmailItem(config.smtpServer, config.emailAddress, config.emailPassWord, config.enable);
+        PublishInfo publishInfo = new PublishInfo(emailItem, apkInfos)
+        def json = JsonOutput.toJson(publishInfo)
+        def bytes = Base64.getUrlEncoder().encode(json.getBytes("utf-8"));
+        String data = new String(bytes);
+        def command = "cmd /c java -jar ${projectDir}\\publish\\lib\\AppPublish-1.0-SNAPSHOT.jar publish $data";
+        println "gui 显示开始"
+        println command
+        def result = command.execute().text;
+        println "显示GUI 执行结果:" + result;
+    }
+
+    static void showBuildApk(Apk... apks) {
+        List<ApkInfo> apkInfos = getApkInfos(apks);
+
+        def json = JsonOutput.toJson(apkInfos)
+        def bytes = Base64.getUrlEncoder().encode(json.getBytes("utf-8"));
+        String data = new String(bytes);
+        def command = "cmd /c java -jar ${projectDir}\\publish\\lib\\AppPublish-1.0-SNAPSHOT.jar build $data";
+        command.execute()
+        //  println "gui 显示开始"
+        //   println command
+        //   def result =command.execute().text;
+        //  println "显示GUI 执行结果:" + result;
+    }
+
+    static List<ApkInfo> getApkInfos(final Apk... apks) {
+        return apks.collect {
+            new ApkInfo(
+                    it.appName,
+                    it.name,
+                    it.androidVersionName,
+                    it.androidVersionCode,
+                    it.outputFileName,
+                    it.outputDirectory,
+                    it.logoPath,
+                    it.dowLoadUrl
+            );
+        }
+    }
+
+    static void showInfo(InputStream inputStream) {
+        BufferedReader bufferedReader = null;
+        try {
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "gbk"));
+            String line = null;
+            while ((line = bufferedReader.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
+
+    static void showErrorInfo(InputStream inputStream) {
+        BufferedReader bufferedReader = null;
+        try {
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "gbk"));
+            String line = null;
+            while ((line = bufferedReader.readLine()) != null) {
+                System.err.println(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
+
+
+    static void showProcessInfo(Process process) {
+        showInfo(process.getInputStream())
+        showErrorInfo(process.getErrorStream())
+    }
+
+    static String  executeCurl(String command){
+
+        String outLogPath = "${projectDir}\\publish\\log\\curlResult_${System.currentTimeMillis()}.txt"
+        File outFile=new  File(outLogPath);
+        outFile.createNewFile();
+
+        def command2=command+" --trace-time -o $outLogPath"
+        Process process=command2.execute();
+        // 新建线程接收子进程输出信息（INFO）
+        new Thread({
+            try {
+                InputStreamReader inputStreamReaderINFO = new InputStreamReader(process.getInputStream());
+                BufferedReader bufferedReaderINFO = new BufferedReader(inputStreamReaderINFO);
+                String lineStr;
+                while ((lineStr = bufferedReaderINFO.readLine()) != null) {
+                    System.out.println("上传中 > " + lineStr);
+                }
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+        }).start();
+
+        // 新建线程接收子进程输出信息（ERROR）
+        new Thread( {
+            try {
+                InputStreamReader inputStreamReaderERROR = new InputStreamReader(process.getErrorStream());
+                BufferedReader bufferedReaderERROR = new BufferedReader(inputStreamReaderERROR);
+                String lineStr;
+                while ((lineStr = bufferedReaderERROR.readLine()) != null) {
+                    System.out.println("上传中 > " + lineStr);
+                }
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+        }).start();
+        process.waitFor()
+        String result= outFile.text;
+        outFile.delete()
+        return result;
+
+    }
+
+    /**
+     * 兼容Android Gradle 插件 4.0.1以上获取apk的路径
+     * @param outputDirectory
+     * @return
+     */
+    static String getOutPutPath(Object outputDirectory){
+        if(outputDirectory instanceof File){
+            return outputDirectory.path
+        }else{
+            return  outputDirectory.getAsFile().get().path;
+        }
+
+
+    }
+}
+
+Util.projectDir=getProject().getProjectDir().toString()
+
+/**
+ * 加固任务
+ */
+class JiaGuTask extends DefaultTask {
+    JiaGuConfig jiaGuConfig;
+    SignConfig signConfig;
+    PackApkTask packApkTask;
+
+    @javax.inject.Inject
+    JiaGuTask(JiaGuConfig jiaGuConfig, SignConfig signConfig, PackApkTask packApkTask) {
+        this.jiaGuConfig = jiaGuConfig
+        this.signConfig = signConfig
+        this.packApkTask = packApkTask
+
+        dependsOn packApkTask;
+
+        group '打包助手'
+    }
+
+    @TaskAction
+    void doJiaGu() {
+        println "开始加固"
+        String cmd1 = "java -jar ${jiaGuConfig.jarPath} -login ${jiaGuConfig.userName} ${jiaGuConfig.password}";
+        println cmd1
+        println cmd1.execute().text
+        String cmd2 = "java -jar -importsign  ${jiaGuConfig.jarPath} ${signConfig.storeFile.path} ${signConfig.storePassword} ${signConfig.keyAlias} ${signConfig.keyPassword}"
+        println cmd2
+        println cmd2.execute().text
+
+
+        def filePath = packApkTask.apk.outputDirectory + File.separator + packApkTask.apk.outputFileName;
+        //   def outAakPath=jiaGuConfig.outPutPath+File.separator+"已加固_"+packApkTask.apk.outputFileName;
+        def outApkPath = jiaGuConfig.outPutPath;
+        def cmd3 = "java -jar  ${jiaGuConfig.jarPath}  -jiagu $filePath $outApkPath -autosign";
+        println cmd3;
+        Process process = cmd3.execute();
+        Util.showProcessInfo(process)
+
+
+    }
+
+}
+
+
+/**
+ * 打包任务
+ */
+class PackApkTask extends DefaultTask {
+    Apk apk;
+    boolean beQuiet = false;
+    Task realTask;
+
+    @javax.inject.Inject
+    PackApkTask(boolean beQuiet, Apk apk) {
+        this.beQuiet = beQuiet;
+        this.apk = apk;
+
+        setRealTask()
+
+        if (!beQuiet) {
+            group "打包助手"
+        }
+
+    }
+
+    void setRealTask() {
+        String androidTaskName = "assemble${captureName(apk.flavor)}${captureName(apk.buildType)}"
+        Task task = project.getTasks().getByName(androidTaskName)
+        if (task != null) {
+            realTask = task;
+            dependsOn(task)
+        }
+    }
+
+    //实现首字母大写功能
+    String captureName(String name) {
+        name = name.substring(0, 1).toUpperCase() + name.substring(1);
+        return name;
+
+    }
+
+    @TaskAction
+    void doPack() {
+        printTaskInfo();
+        if (!beQuiet) {
+            Util.showBuildApk(apk)
+        }
+    }
+
+
+    void printTaskInfo() {
+        //打印输出信息
+        printLine()
+        println "打包完成 ${apk.appName + apk.name}"
+        println "apk 文件保存在以下文件夹 "
+        println apk.outputDirectory
+        println "文件名为:"
+        println apk.outputFileName
+        Util.printlnLine2();
+    }
+
+    void printLine() {
+        println '------------------------------------------------------------------------'
+    }
+}
+
+
+/**
+ * 上传的基类
+ */
+class UploadTask<T> extends DefaultTask {
+    boolean beQuiet = false;
+    Apk apk;
+    T config;
+    EmailConfig emailConfig;
+
+    @javax.inject.Inject
+    UploadTask(boolean beQuiet, T config, PackApkTask apkTask, EmailConfig emailConfig) {
+        this.beQuiet = beQuiet;
+        this.apk = apkTask.apk;
+        this.config = config;
+        this.emailConfig = emailConfig;
+        dependsOn(apkTask)
+        if (!beQuiet) {
+            group "打包助手"
+        }
+    }
+}
+
+
+/**
+ * 上传到Fir服务器
+ */
+class UploadFirTask extends UploadTask<Fir> {
+
+
+    @javax.inject.Inject
+    UploadFirTask(boolean beQuiet, Fir fir, PackApkTask apkTask, EmailConfig emailConfig) {
+        super(beQuiet, fir, apkTask, emailConfig)
+    }
+
+    @TaskAction
+    void upload() {
+        Util.printlnLine2()
+        println "开始上传到fir..."
+
+        //获取fir上传凭证的各个字段
+        def appInfo = ("curl  -X POST -d type=android&" +
+                //获取app applicationId
+                "bundle_id=$project.android.defaultConfig.applicationId&" +
+                "api_token=${config.apiToken} " +
+                "http://api.bq04.com/apps ").execute().text;
+
+
+        //json解析对象拿到的是Map, 集合对应的是array, 按照这个规则取出我们需要的数据
+        def appInfoBean = new groovy.json.JsonSlurper().parseText(appInfo)
+        def iconKey = appInfoBean["cert"]["icon"]["key"]
+        def iconUrl = appInfoBean["cert"]["icon"]["upload_url"]
+        def iconToken = appInfoBean["cert"]["icon"]["token"]
+        //上传logo
+        def uploadLogo =
+                "curl -X POST  --form file=@${apk.logoPath};filename=logo.png" +
+                        " -F token=$iconToken" +
+                        " -F key=$iconKey" +
+                        " $iconUrl"
+        //  println uploadLogo
+        def uploadLogoResult = uploadLogo.execute().text;
+        // println "上传logo结果"
+        // println uploadLogoResult
+
+        def appId = appInfoBean["id"]
+        def fileKey = appInfoBean["cert"]["binary"]["key"]
+        def fileToken = appInfoBean["cert"]["binary"]["token"]
+        def fileUrl = appInfoBean["cert"]["binary"]["upload_url"]
+
+        //执行上传命令 注意apk路径不能包含中文、空格
+        //applicationVariants[0]对应的是某个buildType 具体可打印查看 默认0为debug 1为release
+        def apkFile = apk.outputDirectory + File.separator + apk.outputFileName
+        def log = "upload by 打包助手"
+        if (apk.useGitLog) {
+            log = (("git log --no-merges --pretty=format:%s_____by__%cn<br> HEAD -5")
+                    .execute().text).replace("\n", "");
+        }
+
+        def upload = (
+                " curl -X POST  --form file=@$apkFile;filename=upload.apk" +
+                        " -F token=$fileToken" +
+                        " -F key=$fileKey" +
+                        //git提交次数 作为测试包版本后缀
+                        " -F x:version=$project.android.defaultConfig.versionName"
+                        + "." + ("git rev-list --count HEAD").execute().text +
+                        " -F x:build=$project.android.defaultConfig.versionCode" +
+                        " -F \"x:name=$apk.appName\"" +
+                        " -F \"x:changelog=" + log
+                        + "\"" + " $fileUrl ")
+        println '上传命令'
+        println upload
+        //解析上传结果
+        def resultStr= Util.executeCurl(upload)
+
+
+
+        // println resultStr
+        def uploadResult = null;
+        if (resultStr != null && !"".equals(resultStr)) {
+            uploadResult = new groovy.json.JsonSlurper().parseText(resultStr)
+
+        }
+        def str = null;
+        if (uploadResult != null && uploadResult["is_completed"]) {
+            str = "上传成功"
+            //上传成功打开url
+
+        } else {
+            str = "上传失败"
+        }
+
+        //控制台打印信息
+        println "执行结果"
+        println str
+
+
+        //获取应用信息
+        def appDetailInfo = "curl http://api.bq04.com/apps/{$appId}?api_token=${config.apiToken}".execute().text;
+        println "应用信息"
+        //   println appDetailInfo
+
+
+        def appDetailInfoBean = new groovy.json.JsonSlurper().parseText(appDetailInfo)
+        def shortLink = "http://" + appDetailInfoBean["download_domain"] + "/" + appDetailInfoBean["short"];
+        println "下载地址:" + shortLink
+        apk.dowLoadUrl = shortLink;
+        if (!beQuiet) {
+            Util.showPublish(emailConfig, apk)
+        }
+        Util.printlnLine2()
+    }
+}
+
+class UploadPgyTask extends UploadTask<PGY> {
+    @javax.inject.Inject
+    UploadPgyTask(boolean beQuiet, PGY pgy, PackApkTask apkTask, EmailConfig emailConfig) {
+        super(beQuiet, pgy, apkTask, emailConfig)
+    }
+
+    @TaskAction
+    void upload() {
+        Util.printlnLine2()
+        println "开始上传蒲公英"
+        def apkFile = apk.outputDirectory + File.separator + apk.outputFileName
+        def log = "upload by 打包助手"
+        if (apk.useGitLog) {
+            log = (("git log --no-merges --pretty=format:%s_____by__%cn<br> HEAD -5")
+                    .execute().text).replace("\n", "");
+        }
+        def installType = config.usePasswordOnInstall ? 2 : 1
+
+        def uploadCommand = "curl -F \"file=@${apkFile}\"" +
+                " -F \"installType=${installType}\"" +
+                " -F \"password=${config.password}\"" +
+                " -F \"updateDescription=${log}\" " +
+                " -F \"uKey=${config.uKey}\" " +
+                " -F \"_api_key=${config.apiKey}\" " +
+                " https://upload.pgyer.com/apiv1/app/upload"
+        println uploadCommand
+
+
+
+        def result =  Util.executeCurl(uploadCommand)
+
+        println "上传结果"
+        println result
+        def appDetailInfoBean = new groovy.json.JsonSlurper().parseText(result)
+        apk.dowLoadUrl = "https://www.pgyer.com/" + appDetailInfoBean["data"]["appShortcutUrl"]
+        println "下载地址"
+        println apk.dowLoadUrl
+        if (!beQuiet) {
+            Util.showPublish(emailConfig, apk)
+        }
+        println "上传成功"
+    }
+
+}
+
+
+def publishObj = getExtensions().create("ApkPublish", PublishConfig, project)
+
+//创建任务
+afterEvaluate {
+//    println "TRSPublishEmailEnable value=$TRSPublishEmailEnable"
+    //获取Android中各个变体的apk输出路径。
+    android.applicationVariants.all { variant ->
+        publishObj.apkDomains.forEach {
+            Apk apk = it;
+            if (variant.buildType.name == it.buildType && variant.flavorName == it.flavor) {
+                //  println "打印 signingConfig"
+                //  println JsonOutput.toJson(variant.signingConfig)
+                if (variant.signingConfig != null) {
+                    def asc = variant.signingConfig;
+                    it.signConfig = new SignConfig();
+                    it.signConfig.storeFile = asc.storeFile
+                    it.signConfig.storePassword = asc.storePassword
+                    it.signConfig.keyAlias = asc.keyAlias
+                    it.signConfig.keyPassword = asc.keyPassword
+                }
+                variant.outputs.all {
+                    def outPutPath=Util.getOutPutPath(variant.getPackageApplication().outputDirectory)
+                    apk.apkBuildPath = "$outPutPath\\${outputFileName}"
+                    apk.outputDirectory =outPutPath
+                    apk.outputFileName = outputFileName;
+                }
+            }
+        }
+
+
+    }
+    Map<String, PackApkTask> apkTaskMap = new HashMap<>();
+    publishObj.apkDomains.forEach {
+        it.androidVersionName = project.android.defaultConfig.versionName
+        it.androidVersionCode = getProject().android.defaultConfig.versionCode + ""
+        it.appName = publishObj.apkInfo.appName;
+        it.logoPath = publishObj.apkInfo.appLogo.path;
+        getProject().getTasks().create("打包" + it.name + "apk", PackApkTask, false, it)
+        //安静模式下打包，最后由全部打包任务输出结果
+        PackApkTask packApkTask = getTasks().create("打包" + it.name + "apk-安静模式", PackApkTask, true, it)
+        apkTaskMap.put(it.name, packApkTask)
+
+        if (it.signConfig != null) {
+            //生成加固任务
+            getTasks().create("加固" + it.name + "apk", JiaGuTask, publishObj.jiaGuConfig, it.signConfig, packApkTask)
+        }
+    }
+
+
+    //创建打包全部任务
+    getTasks().create("打包全部apk") {
+
+        group("打包助手");
+
+        dependsOn apkTaskMap.values()
+
+        doLast {
+            println "全部打包完成"
+            List<Apk> apkInfoList = new ArrayList<>();
+            apkTaskMap.values().forEach {
+                apkInfoList.add(it.apk)
+                it.printTaskInfo();
+            }
+            //显示对话框
+            Util.showBuildApk(apkInfoList.toArray(new Apk[0]))
+        }
+    }
+
+    //创建发布任务
+    Map<String, UploadTask> uploadTaskMap = new HashMap<>();
+
+    publishObj.apkDomains.forEach {
+        PackApkTask packApkTask = apkTaskMap.get(it.name);
+        Fir fir = publishObj.firServers.findByName(it.getServerName());
+        if (fir != null) {
+            getTasks().create("发布" + it.name + "apk", UploadFirTask, false, fir, packApkTask, publishObj.email)
+            UploadTask uploadTask = getTasks().create("发布" + it.name + "apk-安静模式", UploadFirTask, true, fir, packApkTask, publishObj.email)
+            uploadTaskMap.put(it.name, uploadTask)
+        } else {
+            //尝试使用蒲公英服务器
+            PGY pgy = publishObj.pgyServers.findByName(it.getServerName());
+            if (pgy != null) {
+                getTasks().create("发布" + it.name + "apk", UploadPgyTask, false, pgy, packApkTask, publishObj.email)
+                UploadTask uploadTask = getTasks().create("发布" + it.name + "apk-安静模式", UploadPgyTask, true, pgy, packApkTask, publishObj.email)
+                uploadTaskMap.put(it.name, uploadTask)
+            }
+        }
+    }
+
+    //创建打包全部任务
+    getTasks().create("发布全部apk") {
+
+        group("打包助手");
+
+        dependsOn uploadTaskMap.values()
+
+        doLast {
+            println "全部发布完成"
+            List<Apk> apkInfoList = new ArrayList<>();
+            uploadTaskMap.values().forEach {
+                apkInfoList.add(it.apk)
+            }
+            //显示对话框
+            Util.showPublish(publishObj.email, apkInfoList.toArray(new Apk[0]))
+        }
+    }
+}
+
+

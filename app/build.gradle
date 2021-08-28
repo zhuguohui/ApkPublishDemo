@@ -1,0 +1,113 @@
+plugins {
+    id 'com.android.application'
+}
+apply from: "publish/publish.gradle"
+ApkPublish {
+
+    jiaGu{
+        jarPath TRSJiaGuJirPath
+        userName TRSJiaGuUserName
+        password  TRSJiaGuPassword
+        //outPutPath路径中不能包含中文
+        outPutPath TRSJiaGuOutPath
+    }
+
+    apkInfo {
+        appName "昨日头条"
+        appLogo file("/publish/icon/app_logo.png")
+    }
+
+    email {
+        smtpServer TRSPublishEmailServer
+        emailAddress TRSPublishEmailAddress
+        emailPassWord TRSPublishEmailPassword
+        enable TRSPublishEmailEnable.toBoolean()
+    }
+
+    fir {
+        公司fir {
+            apiToken TRSFirApiToken
+        }
+    }
+    pgy{
+        公司pgy{
+            uKey TRSPgyUKey
+            apiKey TRSPgyApiKey
+            usePasswordOnInstall TRSPgyUsePasswordOnInstall.toBoolean()
+            password TRSPgyInstallPassword
+        }
+    }
+
+    apk {
+        正式版 {
+            buildType "release"
+            flavor "official"
+            serverName "公司fir"
+            useGitLog true
+        }
+
+        测试版 {
+            buildType "release"
+            flavor "BJTest"
+            serverName "公司pgy"
+            useGitLog true
+        }
+
+    }
+
+}
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        applicationId "com.zgh.apkpublish"
+        minSdkVersion 16
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    signingConfigs {
+        release {
+            storeFile file('../key/apk_publish.jks')
+            storePassword 'admin123'
+            keyPassword 'admin123'
+            keyAlias = 'publish'
+        }
+    }
+
+    buildTypes{
+        release{
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug{
+            signingConfig signingConfigs.release
+        }
+    }
+
+    productFlavors {
+        flavorDimensions "api"
+        official {
+            buildConfigField "String", "BASE_URL", "\"正式环境\""
+        }
+        BJTest{
+            buildConfigField "String", "BASE_URL", "\"测试环境\""
+        }
+    }
+}
+
+
+dependencies {
+
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}
