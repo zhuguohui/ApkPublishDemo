@@ -1,9 +1,12 @@
 plugins {
     id 'com.android.application'
 }
+//引用打包插件
 apply from: "publish/publish.gradle"
-ApkPublish {
 
+//配置打包插件
+ApkPublish {
+    //配置加固信息
     jiaGu{
         jarPath TRSJiaGuJirPath
         userName TRSJiaGuUserName
@@ -11,12 +14,13 @@ ApkPublish {
         //outPutPath路径中不能包含中文
         outPutPath TRSJiaGuOutPath
     }
-
+    //配置应用信息，在弹窗和而成二维码的时候需要使用
     apkInfo {
         appName "昨日头条"
         appLogo file("/publish/icon/app_logo.png")
     }
 
+    //配置Email，如果不需使用，可以将enable设置为false
     email {
         smtpServer TRSPublishEmailServer
         emailAddress TRSPublishEmailAddress
@@ -24,12 +28,23 @@ ApkPublish {
         enable TRSPublishEmailEnable.toBoolean()
     }
 
+    //fir服务器，下面可以配置多个
     fir {
+        //一个fir服务器，"公司fir"是他的名字，只有一个属性apiToken
+        //可以配置多个，只有名字唯一就行。该名字只需要配置为apk中的serverName属性
+        //即可实现自动选择该服务器作为上传服务器
         公司fir {
             apiToken TRSFirApiToken
         }
     }
+    //蒲公英服务器，下面可以配置多个
     pgy{
+        //一个蒲公英服务器，"公司pgy"是他的名字，需要两个属性
+        //uKey和apiKey
+        //usePasswordOnInstall 表示安装的时候是否需要密码 值是bool
+        //password  安装需要的密码，值是String
+        //可以配置多个，只有名字唯一就行。该名字只需要配置为apk中的serverName属性
+        //即可实现自动选择该服务器作为上传服务器
         公司pgy{
             uKey TRSPgyUKey
             apiKey TRSPgyApiKey
@@ -37,8 +52,16 @@ ApkPublish {
             password TRSPgyInstallPassword
         }
     }
-
+    //配置需要生成的apk文件
     apk {
+        //配置一个apk文件
+        //“正式版”是它的名字，根据这个名字会生成3个任务
+        //打包正式版，发布正式版，加固正式版
+        //buildType 值是String类型，必须是Android配置下的的buildType中的某给值
+        //flavor  值是flavor ，必须是Android配置下的productFlavors中的某个值，没有的话可以自己建一个
+        //serverName 上传的服务器名称，必须是fir配置下，或pgy配置下 某项的名字
+        //useGitLog 是否使用git日志作为更新日志。true的话会提取最近的五条日志作为更新日志
+        //否则更新日志会显示upload by 打包助手
         正式版 {
             buildType "release"
             flavor "official"
@@ -70,6 +93,7 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    //需要配置签名，这样才可以实现全过程的自动化
     signingConfigs {
         release {
             storeFile file('../key/apk_publish.jks')
@@ -83,13 +107,16 @@ android {
         release{
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            //设置需要使用的签名配置
             signingConfig signingConfigs.release
         }
         debug{
+            //设置需要使用的签名配置
             signingConfig signingConfigs.release
         }
     }
 
+    //不同的产品风味
     productFlavors {
         flavorDimensions "api"
         official {
