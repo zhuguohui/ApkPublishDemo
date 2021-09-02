@@ -503,7 +503,7 @@ class JiaGuTask extends DefaultTask {
         String cmd1 = "java -jar ${jiaGuConfig.jarPath} -login ${jiaGuConfig.userName} ${jiaGuConfig.password}";
         println cmd1
         println cmd1.execute().text
-        String cmd2 = "java -jar -importsign  ${jiaGuConfig.jarPath} ${signConfig.storeFile.path} ${signConfig.storePassword} ${signConfig.keyAlias} ${signConfig.keyPassword}"
+        String cmd2 = "java -jar   ${jiaGuConfig.jarPath} ${signConfig.storeFile.path} -importsign  ${signConfig.storePassword} ${signConfig.keyAlias} ${signConfig.keyPassword}"
         println cmd2
         println cmd2.execute().text
 
